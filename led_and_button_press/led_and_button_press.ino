@@ -2,24 +2,27 @@
 // Joe Breu (breu@breu.org)
 //
 // LEDs attached to pins 3-10
-// Button on pin 13
+// Button on pin 2
 
 int ledPins[] = {3,4,5,6,7,8,9,10};
 const int buttonPin = 2;
-int buttonState = 0;
+volatile int buttonState = 0;
 
 void setup()
 {
-  pinMode(buttonPin, INPUT);      
+  Serial.begin(9600);
   for(int i = 0; i < 8; i++){
       pinMode(ledPins[i],OUTPUT);
   }
+  pinMode(buttonPin,INPUT);
 }
+
 
 void loop()
 {
   buttonState = digitalRead(buttonPin);
   if (buttonState == LOW) {
+    Serial.println("Button was pushed");
     light_it_up_center(3,4,75);
     delay(100);
     light_one_up(0,1,75);
@@ -28,7 +31,6 @@ void loop()
     delay(100);
     light_it_up_outside(0,7,75);
     delay(100);
-
   }
 }
 
