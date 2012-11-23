@@ -8,6 +8,8 @@
  *
  */
 
+#define DEBUG 0
+
 /*
  * Buttons
  */
@@ -22,10 +24,6 @@ const int sleep_button=2;
  * Constants
  */
 const int max_alarm_plays=10;
-const int music_length=45;
-const char music_notes[]="Cg";
-const int music_beats[]={3,2};
-const int music_tempo=200;
 
 /*
  * Variables
@@ -41,9 +39,11 @@ int alarm_plays=0;
  * Standard Setup Function
  */
 void setup() {
+#if DEBUG > 0
   Serial.begin(115200);
   Serial.print("starting up...");
-  
+#endif
+
   /*
    * Set up the outputs
    */
@@ -60,22 +60,27 @@ void setup() {
    * Set up the inputs
    */
   pinMode(sleep_button,INPUT);
-  
+
+#if DEBUG > 0  
   Serial.println("ready to go");
+#endif
 }
 
 /*
  * Sleep for an amount of time
  */
 void sleeper(unsigned long delayTime=5000) {
+#if DEBUG > 0
   Serial.print("sleeping ");
   Serial.print(delayTime);
   Serial.println(" milliseconds");
-  //if (!sleep_counter) sleep_counter=5000;
+#endif
   digitalWrite(sleep_led,HIGH);
   delay(delayTime);
   digitalWrite(sleep_led,LOW);
+#if DEBUG > 0
   Serial.println("awake from my deep slumber");
+#endif
 }
 
 /*
@@ -91,50 +96,35 @@ void playTone(int tone, int duration) {
 }
 
 /*
- * more music functions
- */
-void playNote(char note, int duration) {
-  char names[] = { 'C', 'g' };
-  int tones[] = { 950, 1350 };
-
-  for (int i = 0; i < 8; i++) {
-    if (names[i] == note) {
-      playTone(tones[i], duration);
-    }
-  }
-}
-
-/*
  * Play the alarm with a built in sleep timer
  *
  * If the sleep_counter is set then light the sleep LED and turn off the blink
  * LED for the duration of the sleep.  If sleep_counter is not active then sound
- * the alarm through the piezo.  Since the pizeo is not set up on the board yet
- * we'll just light an LED to fake it.
+ * the alarm through the piezo and light up the i'm playing an alarm status LED
  */
 void play_alarm() {
   if (sleep_counter) {
     // If we get here and we are supposed have been sleeping then take
     // care of that first.
-    sleep_counter=0;
     sleeper(sleep_counter);
+    sleep_counter=0;
   } else {
     if (alarm_plays < max_alarm_plays) {
-      Serial.println("sounding the alarm!");
+#if DEBUG > 0
+      Serial.print("sounding the alarm!...");
+#endif
       digitalWrite(klaxon_led,HIGH);
-      for (int i = 0; i < music_length; i++) {
-        if (music_notes[i] == ' ') {
-          delay(music_beats[i] * music_tempo); // rest
-        } else {
-          playNote(music_notes[i], music_beats[i] * music_tempo);
-        }
-      }
-      delay(1000);
+      playTone(950,600);
+      playTone(1350,400);
+#if DEBUG > 0
+      Serial.print("End of the alarm #");
+      Serial.println(alarm_plays);
+#endif
       digitalWrite(klaxon_led,LOW);
       alarm_plays++;
     } else {
       alarm_plays=0;
-      sleeper(10000);
+      sleeper(600000);
     }
   }
 }
@@ -147,8 +137,8 @@ void loop() {
   
   if (digitalRead(sleep_button)==LOW) {
     // button pressed
-    Serial.println("button pressed");
-    sleeper(5000);
+    Serial.println("button pressed. Sleep 30 minutes");
+    sleeper(1800000);
   }
   
   // increment the Timer Counter (TC).  This is used to detect errant blinks. 
@@ -172,6 +162,9 @@ void loop() {
          *
          * Now we can wait until we collect 5 blinks and then we can play an alarm
          */
+#if DEBUG > 0
+        Serial.println("blink");
+#endif
         if (last_state) {
           if (counter==5) {
             TC=0;
@@ -197,7 +190,9 @@ void loop() {
    * then reset the state to something that is good and go on.
    */
   if (TC>800) {
+#if DEBUG > 0
     Serial.println("discarding stray state transition");
+#endif
     last_state=0;
     last=0;
     TC=0;
