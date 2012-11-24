@@ -114,8 +114,11 @@ void play_alarm() {
       Serial.print("sounding the alarm!...");
 #endif
       digitalWrite(klaxon_led,HIGH);
-      playTone(950,600);
-      playTone(1350,400);
+      playTone(950,400);
+      playTone(1350,200);
+      delay(250);
+      playTone(950,400);
+      playTone(1350,200);
 #if DEBUG > 0
       Serial.print("End of the alarm #");
       Serial.println(alarm_plays);
