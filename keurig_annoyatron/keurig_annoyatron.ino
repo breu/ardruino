@@ -8,7 +8,9 @@
  *
  */
 
-#define DEBUG 0
+#define DEBUG 1
+#define BLINKS_BEFORE_ALARM 5
+#define LED_THRESHOLD 0.02
 
 /*
  * Buttons
@@ -146,20 +148,31 @@ void loop() {
   
   // increment the Timer Counter (TC).  This is used to detect errant blinks. 
   if (TC) TC++;
-  
+#ifdef DEBUG >0
+  if ((TC % 10) == 0) {
+    float test_val;
+    Serial.print("current: ");
+    Serial.print(current);
+    Serial.print(", last:");
+    Serial.print(last);
+    Serial.print("; delta=");
+    test_val=(float)(current-last)/current;
+    Serial.println(test_val);
+  }
+#endif
   // If we last got a reading from the photo resistor it will be stored in last.
   // In that case we can try and figure out the percentage of the delta.
   if (last) {
     if (current!=last) {
       float delta;
       delta=(float)(current-last)/current;
-      if (delta < -0.15) {
+      if (delta < -LED_THRESHOLD) {
         /*
          * The light is on.  Set last_state=TRUE and increment the Timer Counter
          */
         last_state=1;
         TC++;
-      } else if (delta > 0.15) {
+      } else if (delta > LED_THRESHOLD) {
         /*
          * The light is off...  And that makes a blink.
          *
@@ -169,7 +182,7 @@ void loop() {
         Serial.println("blink");
 #endif
         if (last_state) {
-          if (counter==5) {
+          if (counter==BLINKS_BEFORE_ALARM) {
             TC=0;
             play_alarm();
             counter=0;
